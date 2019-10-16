@@ -41,6 +41,9 @@ include("device/cuda.jl")
 include("device/llvm.jl")
 include("device/runtime.jl")
 
+include("cupti/CUPTI.jl")
+include("nvperf/NVPerf.jl")
+
 include("init.jl")
 
 include("compiler.jl")
@@ -49,6 +52,8 @@ include("exceptions.jl")
 include("reflection.jl")
 
 include("deprecated.jl")
+
+export CUPTI, NVPerf
 
 
 ## initialization
@@ -125,6 +130,21 @@ function __init__()
         let val = find_cuda_binary("ptxas", toolkit_dirs)
             val === nothing && error("Your CUDA installation does not provide the ptxas binary")
             ptxas[] = val
+        end
+
+        toolkit_extras_dirs = filter(dir->isdir(joinpath(dir, "extras")), toolkit_dirs)
+        cupti_dirs = map(dir->joinpath(dir, "CUPTI"), toolkit_extras_dirs)
+
+        let val = find_cuda_library("cupti", cupti_dirs)
+            if val !== nothing
+                CUPTI.libcupti[] = val
+            end
+        end
+
+        let val = find_cuda_library("nvperf_host", cupti_dirs)
+            if val !== nothing
+                NVPerf.libnvperf[] = val
+            end
         end
 
 
