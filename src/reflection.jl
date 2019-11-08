@@ -114,9 +114,9 @@ function code_sass(io::IO, job::CompilerJob; verbose::Bool=false)
     #       by the driver possibly not matching what `ptxas` (part of the toolkit) does.
     # TODO: see how `nvvp` extracts SASS code when doing PC sampling, and copy that.
     verbosity = verbose ? ["--verbose"] : []
-    Base.run(`$(ptxas[]) $verbosity --gpu-name $gpu --output-file $fn --input-as-string $ptx`)
+    Base.run(`$(ptxas) $verbosity --gpu-name $gpu --output-file $fn --input-as-string $ptx`)
     try
-        cmd = `$(nvdisasm[]) --print-code --print-line-info $fn`
+        cmd = `$(nvdisasm) --print-code --print-line-info $fn`
         for line in readlines(cmd)
             # nvdisasm output is pretty verbose;
             # perform some clean-up and make it look like @code_native
