@@ -97,13 +97,33 @@ function status_message(status)
     end
 end
 
+
+## API call wrapper
+
+# API calls that are allowed without a functional context
+const preinit_apicalls = Set{Symbol}([
+    :cuptiGetVersion,
+    :cuptiGetResultString,
+])
+
+# outlined functionality to avoid GC frame allocation
+@noinline function throw_api_error(res)
+    throw(CUPTIError(res))
+end
+
 macro check(ex)
+    fun = Symbol(decode_ccall_function(ex))
+    init = if !in(fun, preinit_apicalls)
+        :(CUDAnative.maybe_initialize())
+    end
     quote
-        local err::CUptiResult
-        err = $(esc(ex::Expr))
-        if err != CUPTI_SUCCESS
-            throw(CUPTIError(err))
+        $init
+
+        res = $(esc(ex))
+        if res != CUPTI_SUCCESS
+            throw_api_error(res)
         end
-        err
+
+        return
     end
 end
